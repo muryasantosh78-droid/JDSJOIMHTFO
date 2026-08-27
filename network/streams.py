@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 import websockets
-from config import WS_BASE, SYMBOL, KLINE_INTERVAL, futures_feeds_live, liquidation_feed_live
+from config import WS_BASE, SYMBOL, futures_feeds_live, liquidation_feed_live
 from core.market_state import market_state
 
 
@@ -118,8 +118,10 @@ async def ws_depth_stream():
 
 
 async def ws_kline_stream():
+    """Subscribe to Min1 klines; all 1..60m timeframes are resampled locally
+    from this one real feed (single source, period-aligned buckets)."""
     await _ws_loop(
-        [{"method": "sub.kline", "param": {"symbol": SYMBOL, "interval": KLINE_INTERVAL}}],
+        [{"method": "sub.kline", "param": {"symbol": SYMBOL, "interval": "Min1"}}],
         _on_kline,
     )
 

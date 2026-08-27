@@ -1,11 +1,18 @@
 # KLODHIOJKOLOOP — MEXC XAU/USDT Bloomberg-Style Scalp Terminal
 
 Real-time scaling terminal for **XAU/USDT** on **MEXC Futures** (XAU_USDT gold perpetual).
-Bloomberg-style layout with live 1H trade signals, order book, tape, and indicators.
+Bloomberg-style layout with **60 different scalp boxes (1m..60m)**, live trade signals,
+order book, tape, and indicators.
 **100% real live data** from the MEXC public API — no dummy/backtest data.
 
 ## Features
-- Live 1H scalping signal band (direction, entry, stop-loss, TP1/TP2/TP3 from ATR)
+- **60 TIMEFRAME SCALP BOXES (1m, 2m, ..., 60m)** — each a real scalp signal
+  (direction, entry, stop-loss, TP1/TP2/TP3 from ATR) computed by resampling the
+  live Min1 candle stream into period-aligned candles for every window
+- **MASTER AGENT (60-TIMEFRAME FUSION)** — weighs all 60 signals by conviction
+  (trend strength + momentum + EMA alignment + candle maturity) and emits a single
+  **IDEAL ENTRY / IDEAL STOP LOSS / IDEAL TARGET TP1..TP3** with the leading timeframe
+- Mini candle sparkline chart in every scalp box
 - L2 order book with bid/ask imbalance
 - Real-time aggregated deal tape (BUY/SELL)
 - RSI(14), ATR(14), EMA9/21, VWAP, micro-price, fair/index price
@@ -41,17 +48,26 @@ setsid nohup env PORT=12001 ./watchdog.sh > watchdog2.log 2>&1 &
 ## Project structure
 ```
 config.py                 # endpoints, timeframe, risk params
-core/market_state.py      # shared state: book, tape, CVD, klines
+core/market_state.py      # shared state: forming, tape, CVD, Min1 klines
 core/indicators.py        # RSI, ATR, EMA, VWAP, micro-price, OFI
+core/multi_tf.py          # 60-TF resampler (1m..60m) + per-TF signals + MASTER AGENT
 core/liquidation_engine.py# FSM (idle->armed->exhausting->triggered)
-network/rest_client.py    # snapshot bootstrap (200x klines, OI, ticker)
-network/streams.py        # live WS: deal, depth, kline, mark price
+network/rest_client.py    # snapshot bootstrap (2000 Min1 klines, OI, ticker)
+network/streams.py        # live WS: deal, depth, Min1 kline, mark price
 execution/trade_manager.py# HMAC-signed bracket orders (simulated w/o keys)
-ui/terminal_ui.py         # Bloomberg layout renderer
+ui/terminal_ui.py         # Bloomberg renderer (60 scalp boxes + IDEAL panel)
 web/server.py             # auto-refreshing web wrapper
 main.py                   # orchestrator + live renderer
 watchdog.sh               # per-port auto-restart watchdog
 ```
+
+## How the 60 timeframes work
+One live **Min1** WebSocket stream is subscribed and a 2000-bar Min1 bootstrap is
+fetched once. `core/multi_tf.py` resamples that single real feed into
+period-aligned candles for every window from 1m to 60m (buckets align to the
+UTC clock), then computes RSI/ATR/EMA9/21/VWAP and the scalp signal for each.
+The **master agent** fuses all 60 by conviction weighting and reports the single
+**IDEAL ENTRY / STOP LOSS / TARGET** plus the leading timeframe.
 
 ## Data source
 MEXC Futures public API:

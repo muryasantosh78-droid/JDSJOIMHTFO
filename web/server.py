@@ -17,10 +17,13 @@ from network.streams import (
 from ui.terminal_ui import render_bloomberg_dashboard
 
 WIDTH = 180
+# Fixed tall viewport so the 60-box grid (approx. 200 rendered lines) is never
+# capped by the console's auto-detected terminal height when run under nohup.
+HEIGHT = 260
 
 
 async def index(request):
-    console = Console(record=True, width=WIDTH)
+    console = Console(record=True, width=WIDTH, height=HEIGHT)
     console.print(render_bloomberg_dashboard())
     doc = console.export_html(inline_styles=True)
     doc = doc.replace("</head>", '<meta http-equiv="refresh" content="1"></head>')

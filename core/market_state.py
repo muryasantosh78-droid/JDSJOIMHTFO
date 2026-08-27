@@ -26,8 +26,10 @@ class MarketState:
         self.trade_events_5s = deque()
         self.recent_cvd_5s = 0.0
 
-        # Klines (1m: [OpenTimeMs, O, H, L, C, V])
-        self.klines_1m = deque(maxlen=200)
+        # Klines (1m: [OpenTimeMs, O, H, L, C, V]).
+        # Sized for multi-timeframe resampling: 60m needs ~a few hours of Min1
+        # bars (MEXC bootstrap returns 2000, enough for all 1..60m windows).
+        self.klines_1m = deque(maxlen=4320)
 
         # Latency
         self.network_latency_ms = 0.0

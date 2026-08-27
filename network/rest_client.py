@@ -24,10 +24,11 @@ async def bootstrap_market_snapshot():
         return
 
     async with aiohttp.ClientSession() as session:
-        # 1. Fetch Klines (port the parallel-array payload to [t,o,h,l,c,v])
+        # 1. Fetch Min1 Klines (port the parallel-array payload to [t,o,h,l,c,v]).
+        #    A single 2000-bar Min1 pull lets us resample all 60 timeframes
+        #    (1m..60m) locally from the same real source. MEXC caps at 2000.
         try:
-            from config import KLINE_INTERVAL
-            kline_url = f"{REST_BASE}/api/v1/contract/kline/{SYMBOL}?interval={KLINE_INTERVAL}&limit=200"
+            kline_url = f"{REST_BASE}/api/v1/contract/kline/{SYMBOL}?interval=Min1&limit=2000"
             async with session.get(kline_url) as resp:
                 if resp.status == 200:
                     payload = await resp.json()
