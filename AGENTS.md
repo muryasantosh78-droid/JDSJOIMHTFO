@@ -14,6 +14,9 @@ Bloomberg-style XAU/USD scalp terminal on **MEXC Futures XAU_USDT perpetual** (t
 - `XAU_USDT` specs via `contract/detail`: priceScale=2, volScale=0 (integer contracts), minVol=1, maxLeverage=1000.
 - Futures signing: headers `ApiKey`, `Request-Time` (ms), `Signature` = HMAC-SHA256(secret, apiKey + requestTime + signatureString). No credentials → SIMULATED mode.
 
+## Multi-timeframe (60 boxes)
+`core/multi_tf.py` resamples the single live **Min1** kline stream (bootstrap 2000 bars, MEXC cap) into period-aligned candles for all 60 windows (1m..60m). Each window gets RSI/ATR/EMA9/21/VWAP + a scalp box (direction, entry, SL, TP1-3 from ATR). `MasterAgent` fuses all 60 by conviction weighting (trend+momentum+EMA alignment+maturity) and yields the single **IDEAL ENTRY / STOP / TARGET** plus the leading timeframe. `ui/terminal_ui.py` renders the 60-box grid with inline sparklines; `web/server.py` must pass an explicit `HEIGHT` to `Console` (≈260) so the grid isn't capped when run under `nohup` (auto-detected terminal height would clip it to the first box row).
+
 ## Run
 `pip install -r requirements.txt && python main.py` (rich Live TUI; `_ws_loop` reconnects; UI render function safe to call standalone for tests).
 
