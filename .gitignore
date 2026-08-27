@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.log
+.agent_tmp/
+watchdog*.log
+web_server*.log
